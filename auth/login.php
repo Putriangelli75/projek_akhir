@@ -1,10 +1,7 @@
 <?php
 session_start();
-include '../config/koneksi.php';
 
-if (!isset($koneksi)) {
-    die("Database connection failed");
-}
+require_once __DIR__ . '/../config/koneksi.php';
 
 if (isset($_SESSION['id_user'])) {
 
@@ -22,14 +19,14 @@ $error = "";
 if (isset($_POST['login'])) {
 
     $email = mysqli_real_escape_string(
-        $koneksi,
+        $conn,
         $_POST['email']
     );
 
     $password = md5($_POST['password']);
 
     $query = mysqli_query(
-        $koneksi,
+        $conn,
         "SELECT * FROM users
         WHERE email='$email'
         AND password='$password'"
@@ -50,8 +47,11 @@ if (isset($_POST['login'])) {
         }
 
         exit;
+
     } else {
+
         $error = "Email atau Password Salah!";
+
     }
 }
 ?>
@@ -62,96 +62,119 @@ if (isset($_POST['login'])) {
 <head>
 
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
 
-    <title>Login - Jakabaring Booking</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Login - Jakabaring Sport Center</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+          rel="stylesheet">
 
 </head>
 
 <body style="background:#f4f6f9;">
 
-    <div class="container">
+<div class="container">
 
-        <div class="row justify-content-center mt-5">
+    <div class="row justify-content-center mt-5">
 
-            <div class="col-md-5">
+        <div class="col-md-5">
 
-                <div class="card shadow">
+            <div class="card shadow-lg border-0">
 
-                    <div class="card-header bg-success text-white text-center">
+                <div class="card-header bg-success text-white text-center">
 
-                        <h3>Jakabaring Sport Center</h3>
+                    <img
+                        src="../assets/img/jakabaring.jpg"
+                        alt="Jakabaring Sport City"
+                        class="img-fluid rounded mb-3"
+                        style="
+                            max-height:200px;
+                            width:100%;
+                            object-fit:cover;
+                        ">
 
-                    </div>
+                    <h3>Jakabaring Sport Center</h3>
 
-                    <div class="card-body">
+                    <small>
+                        Sistem Pemesanan Lapangan Olahraga
+                    </small>
 
-                        <?php if ($error != "") { ?>
+                </div>
 
-                            <div class="alert alert-danger">
+                <div class="card-body p-4">
 
-                                <?= $error; ?>
+                    <?php if ($error != "") { ?>
 
-                            </div>
+                        <div class="alert alert-danger">
 
-                        <?php } ?>
-
-                        <form method="POST">
-
-                            <div class="mb-3">
-
-                                <label>Email</label>
-
-                                <input
-                                    type="email"
-                                    name="email"
-                                    class="form-control"
-                                    required>
-
-                            </div>
-
-                            <div class="mb-3">
-
-                                <label>Password</label>
-
-                                <input
-                                    type="password"
-                                    name="password"
-                                    class="form-control"
-                                    required>
-
-                            </div>
-
-                            <div class="d-grid">
-
-                                <button
-                                    type="submit"
-                                    name="login"
-                                    class="btn btn-success">
-
-                                    Login
-
-                                </button>
-
-                            </div>
-
-                        </form>
-
-                        <hr>
-
-                        <div class="text-center">
-
-                            Belum punya akun?
-
-                            <a href="register.php">
-
-                                Daftar Sekarang
-
-                            </a>
+                            <?= $error; ?>
 
                         </div>
+
+                    <?php } ?>
+
+                    <form method="POST">
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+
+                                Email
+
+                            </label>
+
+                            <input
+                                type="email"
+                                name="email"
+                                class="form-control"
+                                required>
+
+                        </div>
+
+                        <div class="mb-3">
+
+                            <label class="form-label">
+
+                                Password
+
+                            </label>
+
+                            <input
+                                type="password"
+                                name="password"
+                                class="form-control"
+                                required>
+
+                        </div>
+
+                        <div class="d-grid">
+
+                            <button
+                                type="submit"
+                                name="login"
+                                class="btn btn-success">
+
+                                Login
+
+                            </button>
+
+                        </div>
+
+                    </form>
+
+                    <hr>
+
+                    <div class="text-center">
+
+                        Belum punya akun?
+
+                        <a href="register.php">
+
+                            Daftar Sekarang
+
+                        </a>
 
                     </div>
 
@@ -162,6 +185,8 @@ if (isset($_POST['login'])) {
         </div>
 
     </div>
+
+</div>
 
 </body>
 
