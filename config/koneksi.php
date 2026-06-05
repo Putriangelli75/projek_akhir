@@ -1,18 +1,21 @@
 <?php
 
-$host = "localhost";
-$user = "root";
-$pass = "";
-$db   = "db_jakabaring";
+try {
 
-$koneksi = mysqli_connect(
-    $host,
-    $user,
-    $pass,
-    $db
-);
+    $db = new PDO(
+        "sqlite:" . __DIR__ . "/../database/splj.db"
+    );
 
-if(!$koneksi){
-    die("MYSQL ERROR: " . mysqli_connect_error());
+    $db->setAttribute(
+        PDO::ATTR_ERRMODE,
+        PDO::ERRMODE_EXCEPTION
+    );
+
+} catch(PDOException $e){
+
+    die(
+        "Koneksi gagal : "
+        . $e->getMessage()
+    );
+
 }
-$conn = $koneksi;

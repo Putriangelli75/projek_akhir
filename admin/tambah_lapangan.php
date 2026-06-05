@@ -2,146 +2,197 @@
 
 session_start();
 
-if (!isset($_SESSION['id_user'])) {
+if (
+    !isset($_SESSION['id_user']) ||
+    $_SESSION['role'] != 'admin'
+) {
     header("Location: ../auth/login.php");
     exit;
 }
 
-include '../config/koneksi.php';
+require '../config/koneksi.php';
 
-if (isset($koneksi)) {
-    $conn = $koneksi;
-} else {
-    die('Database connection not established.');
-}
+$pesan = '';
 
 if (isset($_POST['simpan'])) {
 
-    $nama = $_POST['nama_lapangan'];
-    $jenis = $_POST['jenis_olahraga'];
-    $harga = $_POST['harga_per_jam'];
-    $status = $_POST['status'];
+    $nama_lapangan   = trim($_POST['nama_lapangan']);
+    $jenis_olahraga  = trim($_POST['jenis_olahraga']);
+    $harga_per_jam   = trim($_POST['harga_per_jam']);
+    $status          = $_POST['status'];
 
-    mysqli_query(
-        $conn,
-        "INSERT INTO lapangan
-        (
-            nama_lapangan,
-            jenis_olahraga,
-            harga_per_jam,
-            status
-        )
-        VALUES
-        (
-            '$nama',
-            '$jenis',
-            '$harga',
-            '$status'
-        )"
-    );
+    // Validasi
+    if (
+        empty($nama_lapangan) ||
+        empty($jenis_olahraga) ||
+        empty($harga_per_jam)
+    ) {
 
-    header("Location: lapangan.php");
-    exit;
+        $pesan = "
+        <div class='alert alert-danger'>
+            Semua field wajib diisi!
+        </div>";
+
+    } elseif (!is_numeric($harga_per_jam) || $harga_per_jam <= 0) {
+
+        $pesan = "
+        <div class='alert alert-danger'>
+            Harga per jam harus berupa angka dan lebih dari 0.
+        </div>";
+
+    } else {
+
+        $stmt = $db->prepare("
+            INSERT INTO lapangan
+            (
+                nama_lapangan,
+                jenis_olahraga,
+                harga_per_jam,
+                status
+            )
+            VALUES
+            (
+                ?, ?, ?, ?
+            )
+        ");
+
+        $stmt->execute([
+            $nama_lapangan,
+            $jenis_olahraga,
+            $harga_per_jam,
+            $status
+        ]);
+
+        header("Location: lapangan.php");
+        exit;
+    }
 }
 
+include '../layouts/header.php';
 ?>
 
-<!DOCTYPE html>
-<html>
+<div class="container-fluid">
 
-<head>
+    <div class="row">
 
-    <title>Tambah Lapangan</title>
+        <?php include '../layouts/sidebar_admin.php'; ?>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <div class="col-md-10">
 
-</head>
+            <div class="content p-4">
 
-<body>
+                <div class="card shadow">
 
-    <div class="container mt-4">
+                    <div class="card-header bg-success text-white">
+                        <h4 class="mb-0">
+                            Tambah Lapangan
+                        </h4>
+                    </div>
 
-        <h2>Tambah Lapangan</h2>
+                    <div class="card-body">
 
-        <form method="POST">
+                        <?= $pesan ?>
 
-            <div class="mb-3">
-                <label>Nama Lapangan</label>
-                <input type="text"
-                    name="nama_lapangan"
-                    class="form-control"
-                    required>
+                        <form method="POST">
+
+                            <div class="mb-3">
+
+                                <label class="form-label">
+                                    Nama Lapangan
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="nama_lapangan"
+                                    class="form-control"
+                                    required>
+
+                            </div>
+
+                            <div class="mb-3">
+
+                                <label class="form-label">
+                                    Jenis Olahraga
+                                </label>
+
+                                <input
+                                    type="text"
+                                    name="jenis_olahraga"
+                                    class="form-control"
+                                    required>
+
+                            </div>
+
+                            <div class="mb-3">
+
+                                <label class="form-label">
+                                    Harga Per Jam
+                                </label>
+
+                                <input
+                                    type="number"
+                                    name="harga_per_jam"
+                                    class="form-control"
+                                    min="1"
+                                    required>
+
+                            </div>
+
+                            <div class="mb-3">
+
+                                <label class="form-label">
+                                    Status
+                                </label>
+
+                                <select
+                                    name="status"
+                                    class="form-control">
+
+                                    <option value="aktif">
+                                        Aktif
+                                    </option>
+
+                                    <option value="nonaktif">
+                                        Non Aktif
+                                    </option>
+
+                                </select>
+
+                            </div>
+
+                            <div class="mt-4">
+
+                                <a
+                                    href="lapangan.php"
+                                    class="btn btn-secondary">
+
+                                    Kembali
+
+                                </a>
+
+                                <button
+                                    type="submit"
+                                    name="simpan"
+                                    class="btn btn-success">
+
+                                    Simpan Lapangan
+
+                                </button>
+
+                            </div>
+
+                        </form>
+
+                    </div>
+
+                </div>
+
             </div>
 
-            <div class="mb-3">
-                <label>Jenis Olahraga</label>
-
-                <select
-                    name="jenis_olahraga"
-                    class="form-control">
-
-                    <option>Futsal</option>
-                    <option>Badminton</option>
-                    <option>Basket</option>
-                    <option>Tennis</option>
-                    <option>Voli</option>
-
-                </select>
-
-            </div>
-
-            <div class="mb-3">
-                <label>Harga Per Jam</label>
-
-                <input
-                    type="number"
-                    name="harga_per_jam"
-                    class="form-control"
-                    required>
-
-            </div>
-
-            <div class="mb-3">
-
-                <label>Status</label>
-
-                <select
-                    name="status"
-                    class="form-control">
-
-                    <option value="Aktif">
-                        Aktif
-                    </option>
-
-                    <option value="Nonaktif">
-                        Nonaktif
-                    </option>
-
-                </select>
-
-            </div>
-
-            <button
-                type="submit"
-                name="simpan"
-                class="btn btn-primary">
-
-                Simpan
-
-            </button>
-
-            <a
-                href="lapangan.php"
-                class="btn btn-secondary">
-
-                Kembali
-
-            </a>
-
-        </form>
+        </div>
 
     </div>
 
-</body>
+</div>
 
-</html>
+<?php include '../layouts/footer.php'; ?>

@@ -2,129 +2,197 @@
 
 session_start();
 
-require_once __DIR__ . '/../config/koneksi.php';
-
-if (!isset($conn) || !$conn) {
-    die('Koneksi database gagal. Silakan periksa konfigurasi.');
+if (
+    !isset($_SESSION['id_user']) ||
+    $_SESSION['role'] != 'pelanggan'
+) {
+    header("Location: ../auth/login.php");
+    exit;
 }
 
-$dataLapangan = mysqli_query(
-    $conn,
-    "SELECT *
-    FROM lapangan
-    WHERE status='Aktif'"
-);
+require '../config/koneksi.php';
 
+$id_lapangan = $_GET['id'];
+
+$lapangan = $db->query("
+SELECT *
+FROM lapangan
+WHERE id_lapangan = $id_lapangan
+")->fetch(PDO::FETCH_ASSOC);
+
+if (isset($_POST['booking'])) {
+
+    $tanggal = $_POST['tanggal'];
+    $jam = $_POST['jam'];
+    $durasi = $_POST['durasi'];
+
+    $total =
+        $lapangan['harga_per_jam']
+        * $durasi;
+
+    $kode =
+        'BK' . time();
+
+    $namaFile = '';
+
+    if (
+        isset($_FILES['bukti']) &&
+        $_FILES['bukti']['error'] == 0
+    ) {
+
+        $ext =
+            pathinfo(
+                $_FILES['bukti']['name'],
+                PATHINFO_EXTENSION
+            );
+
+        $namaFile =
+            time() . "." . $ext;
+
+        move_uploaded_file(
+            $_FILES['bukti']['tmp_name'],
+            "../uploads/" . $namaFile
+        );
+    }
+
+    $stmt = $db->prepare("
+    INSERT INTO booking
+    (
+        kode_booking,
+        id_user,
+        id_lapangan,
+        tanggal_booking,
+        jam_mulai,
+        durasi,
+        total_bayar,
+        bukti_pembayaran
+    )
+    VALUES
+    (
+        ?,?,?,?,?,?,?,?
+    )
+    ");
+
+    $stmt->execute([
+
+        $kode,
+        $_SESSION['id_user'],
+        $id_lapangan,
+        $tanggal,
+        $jam,
+        $durasi,
+        $total,
+        $namaFile
+
+    ]);
+
+    $db->exec(
+        "
+    UPDATE users
+    SET poin = poin + 10
+    WHERE id_user =
+    " . $_SESSION['id_user']
+    );
+
+    header(
+        "Location: riwayat_booking.php"
+    );
+
+    exit;
+}
+
+include '../layouts/header.php';
 ?>
 
-<!DOCTYPE html>
-<html>
+<div class="container mt-5">
 
-<head>
+    <div class="card shadow">
 
-    <title>Booking Lapangan</title>
+        <div class="card-header">
+            Booking Lapangan
+        </div>
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+        <div class="card-body">
 
-</head>
+            <h3>
 
-<body>
+                <?= $lapangan['nama_lapangan'] ?>
 
-    <div class="container mt-4">
+            </h3>
 
-        <h2>Booking Lapangan</h2>
+            <form
+                method="POST"
+                enctype="multipart/form-data">
 
-        <form
-            action="simpan_booking.php"
-            method="POST">
+                <div class="mb-3">
 
-            <div class="mb-3">
+                    <label>Tanggal</label>
 
-                <label>Lapangan</label>
+                    <input
+                        type="date"
+                        name="tanggal"
+                        class="form-control"
+                        required>
 
-                <select
-                    name="id_lapangan"
-                    class="form-control"
-                    required>
+                </div>
 
-                    <option value="">
-                        -- Pilih Lapangan --
-                    </option>
+                <div class="mb-3">
 
-                    <?php
-                    while ($lap = mysqli_fetch_assoc($dataLapangan)) {
-                    ?>
+                    <label>Jam Mulai</label>
 
-                        <option
-                            value="<?= $lap['id_lapangan']; ?>">
+                    <input
+                        type="time"
+                        name="jam"
+                        class="form-control"
+                        required>
 
-                            <?= $lap['nama_lapangan']; ?>
-                            - Rp <?= number_format($lap['harga_per_jam']); ?>/Jam
+                </div>
 
-                        </option>
+                <div class="mb-3">
 
-                    <?php } ?>
+                    <label>Durasi</label>
 
-                </select>
+                    <select
+                        name="durasi"
+                        class="form-control">
 
-            </div>
+                        <option value="1">1 Jam</option>
+                        <option value="2">2 Jam</option>
+                        <option value="3">3 Jam</option>
 
-            <div class="mb-3">
+                    </select>
 
-                <label>Tanggal</label>
+                </div>
 
-                <input
-                    type="date"
-                    name="tanggal"
-                    class="form-control"
-                    required>
+                <div class="mb-3">
 
-            </div>
+                    <label>
+                        Upload Bukti Pembayaran
+                    </label>
 
-            <div class="mb-3">
+                    <input
+                        type="file"
+                        name="bukti"
+                        class="form-control"
+                        accept=".jpg,.jpeg,.png"
+                        required>
 
-                <label>Jam Mulai</label>
+                </div>
 
-                <input
-                    type="time"
-                    name="jam_mulai"
-                    class="form-control"
-                    required>
+                <button
+                    name="booking"
+                    class="btn btn-success">
 
-            </div>
+                    Booking Sekarang
 
-            <div class="mb-3">
+                </button>
 
-                <label>Jam Selesai</label>
+            </form>
 
-                <input
-                    type="time"
-                    name="jam_selesai"
-                    class="form-control"
-                    required>
-
-            </div>
-
-            <button
-                type="submit"
-                class="btn btn-primary">
-
-                Booking
-
-            </button>
-
-            <a
-                href="dashboard.php"
-                class="btn btn-secondary">
-
-                Kembali
-
-            </a>
-
-        </form>
+        </div>
 
     </div>
 
-</body>
+</div>
 
-</html>
+<?php include '../layouts/footer.php'; ?>

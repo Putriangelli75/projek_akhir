@@ -2,150 +2,197 @@
 
 session_start();
 
-require_once __DIR__ . '/../config/koneksi.php';
-
-if (!isset($conn) && isset($koneksi)) {
-    $conn = $koneksi;
-}
-
-if (!isset($conn)) {
-    die('Database connection not available.');
-}
-
-$id = $_GET['id'];
-
-$data = mysqli_fetch_assoc(
-    mysqli_query(
-        $conn,
-        "SELECT * FROM lapangan
-        WHERE id_lapangan='$id'"
-    )
-);
-
-if (isset($_POST['update'])) {
-
-    $nama = $_POST['nama_lapangan'];
-    $jenis = $_POST['jenis_olahraga'];
-    $harga = $_POST['harga_per_jam'];
-    $status = $_POST['status'];
-
-    mysqli_query(
-        $conn,
-        "UPDATE lapangan
-        SET
-            nama_lapangan='$nama',
-            jenis_olahraga='$jenis',
-            harga_per_jam='$harga',
-            status='$status'
-        WHERE id_lapangan='$id'"
-    );
-
-    header("Location: lapangan.php");
+if (
+    !isset($_SESSION['id_user']) ||
+    $_SESSION['role'] != 'admin'
+) {
+    header("Location: ../auth/login.php");
     exit;
 }
 
+require '../config/koneksi.php';
+
+$id = $_GET['id'];
+
+$stmt = $db->prepare("
+SELECT *
+FROM lapangan
+WHERE id_lapangan = ?
+");
+
+$stmt->execute([$id]);
+
+$lapangan = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if (!$lapangan) {
+
+    die("Data lapangan tidak ditemukan.");
+
+}
+
+if (isset($_POST['update'])) {
+
+    $nama_lapangan = trim($_POST['nama_lapangan']);
+    $jenis_olahraga = trim($_POST['jenis_olahraga']);
+    $harga_per_jam = trim($_POST['harga_per_jam']);
+    $status = trim($_POST['status']);
+
+    if (
+        empty($nama_lapangan) ||
+        empty($jenis_olahraga) ||
+        empty($harga_per_jam)
+    ) {
+
+        echo "
+        <script>
+        alert('Semua field wajib diisi!');
+        </script>
+        ";
+
+    } else {
+
+        $update = $db->prepare("
+        UPDATE lapangan
+        SET
+            nama_lapangan = ?,
+            jenis_olahraga = ?,
+            harga_per_jam = ?,
+            status = ?
+        WHERE id_lapangan = ?
+        ");
+
+        $update->execute([
+
+            $nama_lapangan,
+            $jenis_olahraga,
+            $harga_per_jam,
+            $status,
+            $id
+
+        ]);
+
+        header("Location: lapangan.php");
+        exit;
+    }
+}
+
+include '../layouts/header.php';
 ?>
 
-<!DOCTYPE html>
-<html>
+<div class="container mt-5">
 
-<head>
+    <div class="card shadow">
 
-    <title>Edit Lapangan</title>
+        <div class="card-header">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+            <h4 class="mb-0">
+                Edit Lapangan
+            </h4>
 
-</head>
+        </div>
 
-<body>
+        <div class="card-body">
 
-    <div class="container mt-4">
+            <form method="POST">
 
-        <h2>Edit Lapangan</h2>
+                <div class="mb-3">
 
-        <form method="POST">
+                    <label class="form-label">
+                        Nama Lapangan
+                    </label>
 
-            <div class="mb-3">
+                    <input
+                        type="text"
+                        name="nama_lapangan"
+                        class="form-control"
+                        value="<?= htmlspecialchars($lapangan['nama_lapangan']) ?>"
+                        required>
 
-                <label>Nama Lapangan</label>
+                </div>
 
-                <input
-                    type="text"
-                    name="nama_lapangan"
-                    class="form-control"
-                    value="<?= $data['nama_lapangan']; ?>"
-                    required>
+                <div class="mb-3">
 
-            </div>
+                    <label class="form-label">
+                        Jenis Olahraga
+                    </label>
 
-            <div class="mb-3">
+                    <input
+                        type="text"
+                        name="jenis_olahraga"
+                        class="form-control"
+                        value="<?= htmlspecialchars($lapangan['jenis_olahraga']) ?>"
+                        required>
 
-                <label>Jenis Olahraga</label>
+                </div>
 
-                <input
-                    type="text"
-                    name="jenis_olahraga"
-                    class="form-control"
-                    value="<?= $data['jenis_olahraga']; ?>"
-                    required>
+                <div class="mb-3">
 
-            </div>
+                    <label class="form-label">
+                        Harga per Jam
+                    </label>
 
-            <div class="mb-3">
+                    <input
+                        type="number"
+                        name="harga_per_jam"
+                        class="form-control"
+                        value="<?= $lapangan['harga_per_jam'] ?>"
+                        required>
 
-                <label>Harga Per Jam</label>
+                </div>
 
-                <input
-                    type="number"
-                    name="harga_per_jam"
-                    class="form-control"
-                    value="<?= $data['harga_per_jam']; ?>"
-                    required>
+                <div class="mb-3">
 
-            </div>
+                    <label class="form-label">
+                        Status
+                    </label>
 
-            <div class="mb-3">
+                    <select
+                        name="status"
+                        class="form-control">
 
-                <label>Status</label>
+                        <option
+                            value="aktif"
+                            <?= $lapangan['status'] == 'aktif' ? 'selected' : '' ?>>
+                            Aktif
+                        </option>
 
-                <select
-                    name="status"
-                    class="form-control">
+                        <option
+                            value="nonaktif"
+                            <?= $lapangan['status'] == 'nonaktif' ? 'selected' : '' ?>>
+                            Non Aktif
+                        </option>
 
-                    <option
-                        <?= $data['status'] == "Aktif" ? "selected" : ""; ?>>
-                        Aktif
-                    </option>
+                    </select>
 
-                    <option
-                        <?= $data['status'] == "Nonaktif" ? "selected" : ""; ?>>
-                        Nonaktif
-                    </option>
+                </div>
 
-                </select>
+                <div class="d-flex gap-2">
 
-            </div>
+                    <a
+                        href="lapangan.php"
+                        class="btn btn-secondary">
 
-            <button
-                name="update"
-                class="btn btn-success">
+                        ← Kembali
 
-                Update
+                    </a>
 
-            </button>
+                    <button
+                        type="submit"
+                        name="update"
+                        class="btn btn-warning">
 
-            <a
-                href="lapangan.php"
-                class="btn btn-secondary">
+                        Update
 
-                Kembali
+                    </button>
 
-            </a>
+                </div>
 
-        </form>
+            </form>
+
+        </div>
 
     </div>
 
-</body>
+</div>
 
-</html>
+<?php include '../layouts/footer.php'; ?>

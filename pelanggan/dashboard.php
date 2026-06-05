@@ -2,183 +2,120 @@
 
 session_start();
 
-if (!isset($_SESSION['id_user'])) {
+if (
+    !isset($_SESSION['id_user']) ||
+    $_SESSION['role'] != 'pelanggan'
+) {
     header("Location: ../auth/login.php");
     exit;
 }
 
+require '../config/koneksi.php';
+
+$id_user = $_SESSION['id_user'];
+
+$user = $db->query("
+SELECT *
+FROM users
+WHERE id_user = $id_user
+")->fetch(PDO::FETCH_ASSOC);
+
+$totalBooking = $db->query("
+SELECT COUNT(*)
+FROM booking
+WHERE id_user = $id_user
+")->fetchColumn();
+
+include '../layouts/header.php';
 ?>
 
-<!DOCTYPE html>
-<html>
-
-<head>
-
-    <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
-
-    <title>Dashboard Pelanggan</title>
-
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          rel="stylesheet">
-
-</head>
-
-<body style="background:#f4f6f9;">
-
-<!-- Navbar -->
-<nav class="navbar navbar-expand-lg navbar-dark bg-success shadow">
-
-    <div class="container">
-
-        <a class="navbar-brand d-flex align-items-center" href="#">
-
-            <img
-                src="../assets/img/logo-jakabaring.png"
-                alt="Logo Jakabaring"
-                width="50"
-                height="50"
-                class="me-2">
-
-            <div>
-
-                <strong>Jakabaring Sport Center</strong>
-
-                <br>
-
-                <small style="font-size:12px;">
-                    Sistem Pemesanan Lapangan
-                </small>
-
-            </div>
-
-        </a>
-
-        <div>
-
-            <span class="text-white me-3">
-
-                Selamat Datang,
-                <strong><?= $_SESSION['nama']; ?></strong>
-
-            </span>
-
-            <a href="../auth/logout.php"
-               class="btn btn-danger btn-sm">
-
-                Logout
-
-            </a>
-
-        </div>
-
-    </div>
-
-</nav>
-
-<!-- Isi Dashboard -->
-<div class="container mt-4">
-
-    <div class="text-center mb-4">
-
-        <img
-            src="../assets/img/logo-jakabaring.png"
-            alt="Logo Jakabaring"
-            width="120"
-            class="mb-3">
-
-        <h2>Dashboard Pelanggan</h2>
-
-        <p class="text-muted">
-
-            Selamat datang di Sistem Pemesanan Lapangan
-            Jakabaring Sport Center
-
-        </p>
-
-    </div>
+<div class="container-fluid">
 
     <div class="row">
 
-        <!-- Booking -->
-        <div class="col-md-4 mb-3">
+        <?php include '../layouts/sidebar_pelanggan.php'; ?>
 
-            <div class="card shadow h-100">
+        <div class="col-md-10">
 
-                <div class="card-body text-center">
+            <div class="content">
 
-                    <h5>Buat Booking</h5>
+                <div class="hero-banner mb-4">
 
-                    <p>
+                    <div>
 
-                        Pesan lapangan olahraga sesuai jadwal yang tersedia.
+                        <h1>
+                            Halo,
+                            <?= $user['nama']; ?>
+                        </h1>
 
-                    </p>
+                        <p>
+                            Selamat datang di Sistem Pemesanan
+                            Lapangan Olahraga
+                        </p>
 
-                    <a href="booking.php"
-                       class="btn btn-primary">
-
-                        Booking Sekarang
-
-                    </a>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        <!-- Riwayat -->
-        <div class="col-md-4 mb-3">
-
-            <div class="card shadow h-100">
-
-                <div class="card-body text-center">
-
-                    <h5>Riwayat Booking</h5>
-
-                    <p>
-
-                        Lihat seluruh riwayat booking yang pernah dilakukan.
-
-                    </p>
-
-                    <a href="riwayat.php"
-                       class="btn btn-success">
-
-                        Lihat Riwayat
-
-                    </a>
+                    </div>
 
                 </div>
 
-            </div>
+                <div class="row">
 
-        </div>
+                    <div class="col-md-4">
 
-        <!-- Pembayaran -->
-        <div class="col-md-4 mb-3">
+                        <div class="card card-stat shadow">
 
-            <div class="card shadow h-100">
+                            <div class="card-body text-center">
 
-                <div class="card-body text-center">
+                                <h5>Total Booking</h5>
 
-                    <h5>Pembayaran</h5>
+                                <h1><?= $totalBooking ?></h1>
 
-                    <p>
+                            </div>
 
-                        Upload bukti pembayaran booking lapangan.
+                        </div>
 
-                    </p>
+                    </div>
 
-                    <a href="pembayaran.php"
-                       class="btn btn-warning">
+                    <div class="col-md-4">
 
-                        Upload Pembayaran
+                        <div class="card card-stat shadow">
 
-                    </a>
+                            <div class="card-body text-center">
+
+                                <h5>Membership</h5>
+
+                                <h3>
+
+                                    <?= ucfirst(
+                                        $user['membership']
+                                    ) ?>
+
+                                </h3>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-4">
+
+                        <div class="card card-stat shadow">
+
+                            <div class="card-body text-center">
+
+                                <h5>Reward Point</h5>
+
+                                <h1>
+
+                                    <?= $user['poin'] ?>
+
+                                </h1>
+
+                            </div>
+
+                        </div>
+
+                    </div>
 
                 </div>
 
@@ -190,6 +127,4 @@ if (!isset($_SESSION['id_user'])) {
 
 </div>
 
-</body>
-
-</html>
+<?php include '../layouts/footer.php'; ?>

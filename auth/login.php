@@ -1,57 +1,71 @@
 <?php
+
 session_start();
 
-require_once __DIR__ . '/../config/koneksi.php';
-
-if (isset($_SESSION['id_user'])) {
-
-    if ($_SESSION['role'] == 'admin') {
-        header("Location: ../admin/dashboard.php");
-    } else {
-        header("Location: ../pelanggan/dashboard.php");
-    }
-
-    exit;
-}
-
-$error = "";
+require '../config/koneksi.php';
 
 if (isset($_POST['login'])) {
 
-    $email = mysqli_real_escape_string(
-        $conn,
-        $_POST['email']
-    );
+    $email = $_POST['email'];
 
-    $password = md5($_POST['password']);
+    $password = $_POST['password'];
 
-    $query = mysqli_query(
-        $conn,
-        "SELECT * FROM users
-        WHERE email='$email'
-        AND password='$password'"
-    );
+    $stmt = $db->prepare("
+    SELECT *
+    FROM users
+    WHERE email=?
+    ");
 
-    if (mysqli_num_rows($query) > 0) {
+    $stmt->execute([
+        $email
+    ]);
 
-        $data = mysqli_fetch_assoc($query);
+    $user =
+        $stmt->fetch(PDO::FETCH_ASSOC);
 
-        $_SESSION['id_user'] = $data['id_user'];
-        $_SESSION['nama'] = $data['nama'];
-        $_SESSION['role'] = $data['role'];
+    if ($user) {
 
-        if ($data['role'] == 'admin') {
-            header("Location: ../admin/dashboard.php");
+        if (
+            password_verify(
+                $password,
+                $user['password']
+            )
+        ) {
+
+            $_SESSION['id_user']
+                = $user['id_user'];
+
+            $_SESSION['nama']
+                = $user['nama'];
+
+            $_SESSION['role']
+                = $user['role'];
+
+            if (
+                $user['role']
+                == 'admin'
+            ) {
+
+                header(
+                    "Location: ../admin/dashboard.php"
+                );
+            } else {
+
+                header(
+                    "Location: ../pelanggan/dashboard.php"
+                );
+            }
+
+            exit;
         } else {
-            header("Location: ../pelanggan/dashboard.php");
+
+            $error =
+                "Password salah";
         }
-
-        exit;
-
     } else {
 
-        $error = "Email atau Password Salah!";
-
+        $error =
+            "Email tidak ditemukan";
     }
 }
 ?>
@@ -61,118 +75,85 @@ if (isset($_POST['login'])) {
 
 <head>
 
-    <meta charset="UTF-8">
-
-    <meta name="viewport"
-          content="width=device-width, initial-scale=1">
-
-    <title>Login - Jakabaring Sport Center</title>
+    <title>Login SPLJ</title>
 
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-          rel="stylesheet">
+        rel="stylesheet">
 
 </head>
 
-<body style="background:#f4f6f9;">
+<body>
 
-<div class="container">
+    <div class="container">
 
-    <div class="row justify-content-center mt-5">
+        <div class="row justify-content-center">
 
-        <div class="col-md-5">
+            <div class="col-md-4">
 
-            <div class="card shadow-lg border-0">
+                <div class="card shadow mt-5">
 
-                <div class="card-header bg-success text-white text-center">
+                    <div class="card-header">
 
-                    <img
-                        src="../assets/img/jakabaring.jpg"
-                        alt="Jakabaring Sport City"
-                        class="img-fluid rounded mb-3"
-                        style="
-                            max-height:200px;
-                            width:100%;
-                            object-fit:cover;
-                        ">
+                        <h3>Login SPLJ</h3>
 
-                    <h3>Jakabaring Sport Center</h3>
+                    </div>
 
-                    <small>
-                        Sistem Pemesanan Lapangan Olahraga
-                    </small>
+                    <div class="card-body">
 
-                </div>
+                        <?php
 
-                <div class="card-body p-4">
+                        if (isset($error)) {
 
-                    <?php if ($error != "") { ?>
+                            echo "
+<div class='alert alert-danger'>
+$error
+</div>
+";
+                        }
 
-                        <div class="alert alert-danger">
+                        ?>
 
-                            <?= $error; ?>
+                        <form method="POST">
 
-                        </div>
+                            <div class="mb-3">
 
-                    <?php } ?>
+                                <label>Email</label>
 
-                    <form method="POST">
+                                <input
+                                    type="email"
+                                    name="email"
+                                    class="form-control"
+                                    required>
 
-                        <div class="mb-3">
+                            </div>
 
-                            <label class="form-label">
+                            <div class="mb-3">
 
-                                Email
+                                <label>Password</label>
 
-                            </label>
+                                <input
+                                    type="password"
+                                    name="password"
+                                    class="form-control"
+                                    required>
 
-                            <input
-                                type="email"
-                                name="email"
-                                class="form-control"
-                                required>
-
-                        </div>
-
-                        <div class="mb-3">
-
-                            <label class="form-label">
-
-                                Password
-
-                            </label>
-
-                            <input
-                                type="password"
-                                name="password"
-                                class="form-control"
-                                required>
-
-                        </div>
-
-                        <div class="d-grid">
+                            </div>
 
                             <button
-                                type="submit"
                                 name="login"
-                                class="btn btn-success">
+                                class="btn btn-success w-100">
 
                                 Login
 
                             </button>
 
-                        </div>
+                        </form>
 
-                    </form>
-
-                    <hr>
-
-                    <div class="text-center">
-
-                        Belum punya akun?
+                        <br>
 
                         <a href="register.php">
 
-                            Daftar Sekarang
+                            Belum punya akun?
 
                         </a>
 
@@ -185,8 +166,6 @@ if (isset($_POST['login'])) {
         </div>
 
     </div>
-
-</div>
 
 </body>
 

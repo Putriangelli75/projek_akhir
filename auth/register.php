@@ -1,65 +1,73 @@
 <?php
-require_once __DIR__ . '/../config/koneksi.php';
 
-/** @var mysqli $koneksi */
-if (!isset($koneksi)) {
-    die('Database connection not established.');
-}
+require '../config/koneksi.php';
 
-$pesan = "";
+if (isset($_POST['register'])) {
 
-if (isset($_POST['daftar'])) {
+    $nama = trim($_POST['nama']);
+    $email = trim($_POST['email']);
+    $no_hp = trim($_POST['no_hp']);
 
-    $nama = mysqli_real_escape_string(
-        $koneksi,
-        $_POST['nama']
+    $password = password_hash(
+        $_POST['password'],
+        PASSWORD_DEFAULT
     );
 
-    $email = mysqli_real_escape_string(
-        $koneksi,
-        $_POST['email']
-    );
+    $cek = $db->prepare("
+        SELECT *
+        FROM users
+        WHERE email = ?
+    ");
 
-    $no_hp = mysqli_real_escape_string(
-        $koneksi,
-        $_POST['no_hp']
-    );
+    $cek->execute([$email]);
 
-    $password = md5($_POST['password']);
+    if ($cek->rowCount() > 0) {
 
-    $cek = mysqli_query(
-        $koneksi,
-        "SELECT * FROM users
-        WHERE email='$email'"
-    );
+        $error = "Email sudah digunakan";
 
-    if (mysqli_num_rows($cek) > 0) {
-
-        $pesan = "Email sudah digunakan!";
     } else {
 
-        mysqli_query(
-            $koneksi,
-            "INSERT INTO users(
+        $stmt = $db->prepare("
+            INSERT INTO users
+            (
                 nama,
                 email,
                 no_hp,
                 password,
                 role
             )
-            VALUES(
-                '$nama',
-                '$email',
-                '$no_hp',
-                '$password',
-                'pelanggan'
-            )"
-        );
+            VALUES
+            (
+                ?,
+                ?,
+                ?,
+                ?,
+                ?
+            )
+        ");
 
-        header("Location: login.php");
+        $stmt->execute([
+            $nama,
+            $email,
+            $no_hp,
+            $password,
+            'pelanggan'
+        ]);
+
+        echo "
+        <script>
+
+            alert('Akun berhasil dibuat! Silakan login.');
+
+            window.location='login.php';
+
+        </script>
+        ";
+
         exit;
     }
 }
+
 ?>
 
 <!DOCTYPE html>
@@ -69,45 +77,52 @@ if (isset($_POST['daftar'])) {
 
     <meta charset="UTF-8">
 
-    <title>Register</title>
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <title>Register SPLJ</title>
+
+    <link
+        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
+        rel="stylesheet">
 
 </head>
 
-<body style="background:#f4f6f9;">
+<body class="bg-light">
 
     <div class="container">
 
-        <div class="row justify-content-center mt-5">
+        <div class="row justify-content-center">
 
-            <div class="col-md-6">
+            <div class="col-md-5">
 
-                <div class="card shadow">
+                <div class="card shadow mt-5">
 
-                    <div class="card-header bg-primary text-white">
+                    <div class="card-header text-center">
 
-                        <h3>Registrasi Pelanggan</h3>
+                        <h3>Register SPLJ</h3>
 
                     </div>
 
                     <div class="card-body">
 
-                        <?php if ($pesan != "") { ?>
+                        <?php if (isset($error)) : ?>
 
                             <div class="alert alert-danger">
 
-                                <?= $pesan; ?>
+                                <?= $error ?>
 
                             </div>
 
-                        <?php } ?>
+                        <?php endif; ?>
 
                         <form method="POST">
 
                             <div class="mb-3">
 
-                                <label>Nama</label>
+                                <label class="form-label">
+                                    Nama Lengkap
+                                </label>
 
                                 <input
                                     type="text"
@@ -119,7 +134,9 @@ if (isset($_POST['daftar'])) {
 
                             <div class="mb-3">
 
-                                <label>Email</label>
+                                <label class="form-label">
+                                    Email
+                                </label>
 
                                 <input
                                     type="email"
@@ -131,19 +148,22 @@ if (isset($_POST['daftar'])) {
 
                             <div class="mb-3">
 
-                                <label>No HP</label>
+                                <label class="form-label">
+                                    Nomor HP
+                                </label>
 
                                 <input
                                     type="text"
                                     name="no_hp"
-                                    class="form-control"
-                                    required>
+                                    class="form-control">
 
                             </div>
 
                             <div class="mb-3">
 
-                                <label>Password</label>
+                                <label class="form-label">
+                                    Password
+                                </label>
 
                                 <input
                                     type="password"
@@ -155,22 +175,26 @@ if (isset($_POST['daftar'])) {
 
                             <button
                                 type="submit"
-                                name="daftar"
-                                class="btn btn-primary">
+                                name="register"
+                                class="btn btn-success w-100">
 
                                 Daftar
 
                             </button>
 
-                            <a
-                                href="login.php"
-                                class="btn btn-secondary">
+                        </form>
 
-                                Kembali
+                        <hr>
+
+                        <div class="text-center">
+
+                            <a href="login.php">
+
+                                Sudah punya akun? Login
 
                             </a>
 
-                        </form>
+                        </div>
 
                     </div>
 

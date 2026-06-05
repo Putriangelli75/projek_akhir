@@ -1,21 +1,18 @@
 <?php
 
-session_start();
-
-$conn = null;
-require_once __DIR__ . '/../config/koneksi.php';
-
-if (!$conn) {
-    die('Database connection not available.');
-}
+require '../config/koneksi.php';
 
 $id = $_GET['id'];
 
-mysqli_query(
-    $conn,
+$stmt = $db->prepare(
     "DELETE FROM lapangan
-    WHERE id_lapangan='$id'"
+WHERE id_lapangan=?"
 );
 
-header("Location: lapangan.php");
+$stmt->execute([$id]);
+
+header(
+    "Location: lapangan.php"
+);
+
 exit;

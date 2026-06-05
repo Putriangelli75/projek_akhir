@@ -2,132 +2,142 @@
 
 session_start();
 
-if (!isset($_SESSION['id_user'])) {
-    header("Location: ../auth/login.php");
-    exit;
-}
+require '../config/koneksi.php';
 
-include '../config/koneksi.php';
-
-if (!isset($conn)) {
-    die("Database connection failed");
-}
-
-$data = mysqli_query(
-    $conn,
-    "SELECT * FROM lapangan
-     ORDER BY id_lapangan DESC"
-);
+include '../layouts/header.php';
 
 ?>
 
-<!DOCTYPE html>
-<html>
+<div class="container-fluid">
 
-<head>
+    <div class="row">
 
-    <meta charset="UTF-8">
+        <?php
+        include '../layouts/sidebar_admin.php';
+        ?>
 
-    <title>Data Lapangan</title>
+        <div class="col-md-10">
 
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+            <div class="content">
 
-</head>
+                <div class="d-flex justify-content-between">
 
-<body>
+                    <h2>Kelola Lapangan</h2>
 
-    <div class="container mt-4">
+                    <a
+                        href="tambah_lapangan.php"
+                        class="btn btn-success">
 
-        <h2>Data Lapangan</h2>
+                        Tambah Lapangan
 
-        <a
-            href="dashboard.php"
-            class="btn btn-secondary mb-3">
+                    </a>
 
-            Kembali
+                </div>
 
-        </a>
+                <hr>
 
-        <a
-            href="tambah_lapangan.php"
-            class="btn btn-primary mb-3">
+                <table
+                    class="table table-bordered table-striped">
 
-            Tambah Lapangan
+                    <thead>
 
-        </a>
+                        <tr>
 
-        <table class="table table-bordered">
+                            <th>ID</th>
+                            <th>Nama Lapangan</th>
+                            <th>Jenis</th>
+                            <th>Harga/Jam</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
 
-            <thead>
+                        </tr>
 
-                <tr>
+                    </thead>
 
-                    <th>No</th>
-                    <th>Nama Lapangan</th>
-                    <th>Jenis</th>
-                    <th>Harga/Jam</th>
-                    <th>Status</th>
-                    <th>Aksi</th>
+                    <tbody>
 
-                </tr>
+                        <?php
 
-            </thead>
+                        $data = $db->query(
+                            "SELECT * FROM lapangan"
+                        );
 
-            <tbody>
+                        while (
+                            $row =
+                            $data->fetch(PDO::FETCH_ASSOC)
+                        ) {
 
-                <?php
+                        ?>
 
-                $no = 1;
+                            <tr>
 
-                while ($d = mysqli_fetch_assoc($data)) {
+                                <td>
+                                    <?= $row['id_lapangan'] ?>
+                                </td>
 
-                ?>
+                                <td>
+                                    <?= $row['nama_lapangan'] ?>
+                                </td>
 
-                    <tr>
+                                <td>
+                                    <?= $row['jenis_olahraga'] ?>
+                                </td>
 
-                        <td><?= $no++; ?></td>
+                                <td>
 
-                        <td><?= $d['nama_lapangan']; ?></td>
+                                    <?php
+                                    $harga = is_numeric($row['harga_per_jam'])
+                                        ? number_format($row['harga_per_jam'])
+                                        : 0;
+                                    ?>
 
-                        <td><?= $d['jenis_olahraga']; ?></td>
+                                    Rp <?= $harga ?>
 
-                        <td>
-                            Rp <?= number_format($d['harga_per_jam']); ?>
-                        </td>
+                                </td>
 
-                        <td><?= $d['status']; ?></td>
+                                <td>
 
-                        <td>
+                                    <?= $row['status'] ?>
 
-                            <a
-                                href="edit_lapangan.php?id=<?= $d['id_lapangan']; ?>"
-                                class="btn btn-warning btn-sm">
+                                </td>
 
-                                Edit
+                                <td>
 
-                            </a>
+                                    <a
+                                        href="edit_lapangan.php?id=<?= $row['id_lapangan'] ?>"
+                                        class="btn btn-warning btn-sm">
 
-                            <a
-                                href="hapus_lapangan.php?id=<?= $d['id_lapangan']; ?>"
-                                class="btn btn-danger btn-sm"
-                                onclick="return confirm('Hapus Data?')">
+                                        Edit
 
-                                Hapus
+                                    </a>
 
-                            </a>
+                                    <a
+                                        href="hapus_lapangan.php?id=<?= $row['id_lapangan'] ?>"
+                                        class="btn btn-danger btn-sm"
+                                        onclick="return confirm('Yakin ingin menghapus?')">
 
-                        </td>
+                                        Hapus
 
-                    </tr>
+                                    </a>
 
-                <?php } ?>
+                                </td>
 
-            </tbody>
+                            </tr>
 
-        </table>
+                        <?php } ?>
+
+                    </tbody>
+
+                </table>
+
+            </div>
+
+        </div>
 
     </div>
 
-</body>
+</div>
 
-</html>
+<?php
+include '../layouts/footer.php';
+?>
