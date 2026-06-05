@@ -179,13 +179,26 @@ include '../layouts/header.php';
 
                 </div>
 
-                <button
-                    name="booking"
-                    class="btn btn-success">
+                <div class="d-flex gap-2">
 
-                    Booking Sekarang
+                    <button
+                        type="submit"
+                        name="booking"
+                        class="btn btn-success">
 
-                </button>
+                        Booking Sekarang
+
+                    </button>
+
+                    <a
+                        href="lapangan.php"
+                        class="btn btn-secondary">
+
+                        Kembali
+
+                    </a>
+
+                </div>
 
             </form>
 
