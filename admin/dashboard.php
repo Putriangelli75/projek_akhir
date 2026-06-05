@@ -62,6 +62,15 @@ if ($pendapatan == "") {
 
     <nav class="navbar navbar-dark bg-success">
 
+        <div class="hero-banner">
+            <img src="../assets/img/header-admin.jpg" alt="Jakabaring Sport Center">
+
+            <div class="hero-overlay">
+                <h1>Dashboard Admin</h1>
+                <p>Sistem Pemesanan Lapangan</p>
+                <p>Jakabaring Sport Center</p>
+            </div>
+        </div>
         <div class="container">
 
             <span class="navbar-brand">
