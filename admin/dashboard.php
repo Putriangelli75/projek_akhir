@@ -12,17 +12,55 @@ if (
 
 require '../config/koneksi.php';
 
-$totalUser = $db->query(
-    "SELECT COUNT(*) FROM users"
-)->fetchColumn();
+$totalUser = $db->query("
+SELECT COUNT(*)
+FROM users
+")->fetchColumn();
 
-$totalLapangan = $db->query(
-    "SELECT COUNT(*) FROM lapangan"
-)->fetchColumn();
+$totalLapangan = $db->query("
+SELECT COUNT(*)
+FROM lapangan
+")->fetchColumn();
 
-$totalBooking = $db->query(
-    "SELECT COUNT(*) FROM booking"
-)->fetchColumn();
+$totalBooking = $db->query("
+SELECT COUNT(*)
+FROM booking
+")->fetchColumn();
+
+$totalRevenue = $db->query("
+SELECT IFNULL(
+SUM(total_bayar),0
+)
+FROM booking
+WHERE status='disetujui'
+")->fetchColumn();
+
+$regular = $db->query("
+SELECT COUNT(*)
+FROM users
+WHERE membership='regular'
+")->fetchColumn();
+
+$premium = $db->query("
+SELECT COUNT(*)
+FROM users
+WHERE membership='premium'
+")->fetchColumn();
+
+$lapanganAktif = $db->query("
+SELECT COUNT(*)
+FROM lapangan
+WHERE status='aktif'
+")->fetchColumn();
+
+$utilisasi = 0;
+
+if ($totalLapangan > 0) {
+
+    $utilisasi = round(
+        ($lapanganAktif / $totalLapangan) * 100
+    );
+}
 
 include '../layouts/header.php';
 
@@ -32,9 +70,7 @@ include '../layouts/header.php';
 
     <div class="row">
 
-        <?php
-        include '../layouts/sidebar_admin.php';
-        ?>
+        <?php include '../layouts/sidebar_admin.php'; ?>
 
         <div class="col-md-10">
 
@@ -57,7 +93,7 @@ include '../layouts/header.php';
 
                 <div class="row">
 
-                    <div class="col-md-4">
+                    <div class="col-md-3 mb-3">
 
                         <div class="card card-stat shadow">
 
@@ -77,7 +113,7 @@ include '../layouts/header.php';
 
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-3 mb-3">
 
                         <div class="card card-stat shadow">
 
@@ -97,7 +133,7 @@ include '../layouts/header.php';
 
                     </div>
 
-                    <div class="col-md-4">
+                    <div class="col-md-3 mb-3">
 
                         <div class="card card-stat shadow">
 
@@ -114,6 +150,117 @@ include '../layouts/header.php';
                             </div>
 
                         </div>
+
+                    </div>
+
+                    <div class="col-md-3 mb-3">
+
+                        <div class="card card-stat shadow">
+
+                            <div class="card-body text-center">
+
+                                <h5>Revenue</h5>
+
+                                <h4>
+
+                                    Rp <?= number_format($totalRevenue) ?>
+
+                                </h4>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="row mt-2">
+
+                    <div class="col-md-6">
+
+                        <div class="card shadow">
+
+                            <div class="card-header bg-success text-white">
+
+                                Membership
+
+                            </div>
+
+                            <div class="card-body">
+
+                                <p>
+
+                                    Regular Member :
+                                    <strong>
+
+                                        <?= $regular ?>
+
+                                    </strong>
+
+                                </p>
+
+                                <p>
+
+                                    Premium Member :
+                                    <strong>
+
+                                        <?= $premium ?>
+
+                                    </strong>
+
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <div class="col-md-6">
+
+                        <div class="card shadow">
+
+                            <div class="card-header bg-primary text-white">
+
+                                Utilisasi Lapangan
+
+                            </div>
+
+                            <div class="card-body text-center">
+
+                                <h1>
+
+                                    <?= $utilisasi ?>%
+
+                                </h1>
+
+                                <p>
+
+                                    Lapangan Aktif :
+                                    <?= $lapanganAktif ?>
+
+                                </p>
+
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <div class="card mt-4 shadow">
+
+                    <div class="card-header bg-dark text-white">
+
+                        Grafik Revenue
+
+                    </div>
+
+                    <div class="card-body">
+
+                        <canvas id="revenueChart"></canvas>
 
                     </div>
 
@@ -148,12 +295,12 @@ include '../layouts/header.php';
 
                                 <?php
 
-                                $data = $db->query(
-                                    "SELECT *
+                                $data = $db->query("
+SELECT *
 FROM lapangan
 ORDER BY id_lapangan DESC
-LIMIT 5"
-                                );
+LIMIT 5
+");
 
                                 while (
                                     $row =
@@ -165,15 +312,21 @@ LIMIT 5"
                                     <tr>
 
                                         <td>
+
                                             <?= $row['id_lapangan'] ?>
+
                                         </td>
 
                                         <td>
+
                                             <?= $row['nama_lapangan'] ?>
+
                                         </td>
 
                                         <td>
+
                                             <?= $row['jenis_olahraga'] ?>
+
                                         </td>
 
                                         <td>
@@ -205,6 +358,67 @@ LIMIT 5"
 
 </div>
 
-<?php
-include '../layouts/footer.php';
-?>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    const ctx =
+        document.getElementById(
+            'revenueChart'
+        );
+
+    new Chart(ctx, {
+
+        type: 'bar',
+
+        data: {
+
+            labels: [
+
+                'Jan',
+                'Feb',
+                'Mar',
+                'Apr',
+                'Mei',
+                'Jun'
+
+            ],
+
+            datasets: [{
+
+                label: 'Revenue',
+
+                data: [
+
+                    1000000,
+                    2500000,
+                    1800000,
+                    3000000,
+                    2200000,
+                    4500000
+
+                ]
+
+            }]
+
+        },
+
+        options: {
+
+            responsive: true,
+
+            plugins: {
+
+                legend: {
+
+                    display: true
+
+                }
+
+            }
+
+        }
+
+    });
+</script>
+
+<?php include '../layouts/footer.php'; ?>
