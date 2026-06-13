@@ -12,22 +12,47 @@ if (
 
 require '../config/koneksi.php';
 
-$id = $_GET['id'];
-$status = $_GET['status'];
+$id_booking = $_GET['id'];
+$status     = $_GET['status'];
 
+/*
+|--------------------------------------------------
+| Update status booking
+|--------------------------------------------------
+*/
 $stmt = $db->prepare("
 UPDATE booking
-SET status=?
-WHERE id_booking=?
+SET status = ?
+WHERE id_booking = ?
 ");
 
 $stmt->execute([
     $status,
-    $id
+    $id_booking
 ]);
 
-header(
-    "Location: booking.php"
-);
+/*
+|--------------------------------------------------
+| Jika selesai -> tambah point
+|--------------------------------------------------
+*/
+if ($status == 'selesai') {
 
+    $user = $db->query("
+    SELECT id_user
+    FROM booking
+    WHERE id_booking = $id_booking
+    ")->fetch(PDO::FETCH_ASSOC);
+
+    if ($user) {
+
+        $db->exec("
+        UPDATE users
+        SET poin = poin + 10
+        WHERE id_user = " . $user['id_user']
+        );
+    }
+}
+
+header("Location: booking.php");
 exit;
